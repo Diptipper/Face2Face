@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face2Face</title>
+    <script src="templates/imglist.js"></script> <!-- Embed external imglist.js -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        #image-wrapper {
+            display: inline-block;
+            max-width: 250px;
+            max-height: 250px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        button, select, label {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.pause {
+            background-color: #dc3545;
+        }
+        button.pause:hover {
+            background-color: #a71d2a;
+        }
+        select {
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Face2Face</h1>
+    <h3>for face drawing practice — by <i>Diptip</i>
+    <a href="https://x.com/Diptipper" target="_blank" rel="noopener noreferrer"><img src="templates/x-icon.png" width=15px></a>
+    <a href="https://bsky.app/profile/diptip.bsky.social" target="_blank" rel="noopener noreferrer"><img src="templates/bsky-icon.jpg" width=15px></a>
+    </h3>
+    <div>
+        <button id="randomize-btn">New face</button>
+        <select id="interval-selector">
+            <option value="5000">5 second</option>
+            <option value="10000" selected>10 seconds</option>
+            <option value="30000">30 seconds</option>
+            <option value="60000">60 seconds</option>
+            <option value="120000">2 minutes</option>
+        </select>
+        <button id="toggle-interval-btn">Auto randomizer</button>
+        <br>
+        <label for="flip-toggle">Flip randomly</label>
+        <input type="checkbox" id="flip-toggle">
+    </div>
+    <div id="image-wrapper">
+        <img id="image-display" alt="Random Image">
+    </div>
+
+    <script>
+        // Construct images array from imglist
+        const images = imglist.map(element => "images/" + element);
+
+        const imgDisplay = document.getElementById('image-display');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const toggleIntervalBtn = document.getElementById('toggle-interval-btn');
+        const intervalSelector = document.getElementById('interval-selector');
+        const flipToggle = document.getElementById('flip-toggle');
+
+        let intervalId = null;
+        let countdownId = null;
+        let countdownTime = 0;
+
+        // Function to display a random image with optional flip
+        function displayRandomImage() {
+            const randomIndex = Math.floor(Math.random() * images.length);
+            imgDisplay.src = images[randomIndex];
+
+            // Apply random flip if the checkbox is checked
+            if (flipToggle.checked) {
+                // Randomly flip the image horizontally
+                const randomFlip = Math.random() > 0.5 ? 'scaleX(-1)' : 'scaleX(1)';
+                imgDisplay.style.transform = randomFlip;
+            } else {
+                imgDisplay.style.transform = 'scaleX(1)'; // Reset any flip
+            }
+        }
+
+        // Function to start a countdown and update the button text
+        function startCountdown(intervalTime) {
+            countdownTime = intervalTime / 1000; // Convert to seconds
+            updateCountdownText();
+
+            // Clear any existing countdown
+            if (countdownId) clearInterval(countdownId);
+
+            // Start new countdown
+            countdownId = setInterval(() => {
+                countdownTime -= 1;
+                if (countdownTime <= 0) countdownTime = intervalTime / 1000;
+                updateCountdownText();
+            }, 1000);
+        }
+
+        // Function to update the button text with the countdown
+        function updateCountdownText() {
+            toggleIntervalBtn.textContent = `Pause Auto randomize (${countdownTime}s)`;
+        }
+
+        // Event listener for manual randomization
+        randomizeBtn.addEventListener('click', () => {
+            displayRandomImage();
+            if (intervalId) {
+            	toggleIntervalBtn.click();
+           		toggleIntervalBtn.click();
+            }
+        });
+
+        // Event listener for toggling auto-randomization
+        toggleIntervalBtn.addEventListener('click', () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+                clearInterval(countdownId);
+                intervalId = null;
+                countdownId = null;
+                toggleIntervalBtn.textContent = 'Auto randomizer';
+                toggleIntervalBtn.classList.remove('pause');
+                intervalSelector.style.display = 'inline'; // Show dropdown
+            } else {
+            	displayRandomImage();
+                const intervalTime = parseInt(intervalSelector.value, 10);
+                intervalId = setInterval(displayRandomImage, intervalTime);
+                startCountdown(intervalTime);
+                toggleIntervalBtn.textContent = `Pause Auto randomize (${countdownTime}s)`;
+                toggleIntervalBtn.classList.add('pause');
+                intervalSelector.style.display = 'none'; // Hide dropdown
+            }
+        });
+
+        // Display a random image on initial load
+        displayRandomImage();
+    </script>
+</body>
+</html>

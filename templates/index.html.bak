@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Metadata editor</title>
+  <style>
+    table { border-collapse: collapse; width: 50%; }
+    table, th, td { border: 1px solid black; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    input[type="text"] { width: 100%; box-sizing: border-box; }
+    img { max-width: 200px; height: auto; }
+  </style>
+</head>
+<body>
+  <center>
+  <form method="POST">
+    <!-- Set hidden input fields with row and column counts -->
+    <input type="hidden" name="num_rows" value="{{ data.shape[0] }}">
+    <input type="hidden" name="num_cols" value="{{ data.shape[1] }}">
+    
+    <table id="spreadsheetTable">
+      <tr>
+        {% for col in data.columns %}
+          <th>{{ col }}</th>
+        {% endfor %}
+        <th></th>
+      </tr>
+      {% for row in range(data.shape[0]) %}
+        <tr>
+          {% for col in range(data.shape[1]) %}
+            <td>
+              {% if col == 0 %}
+                <!-- Display image for the first column using /images/ route -->
+                <img src="{{ url_for('images', filename=data.iloc[row, col]) }}" alt="{{ data.iloc[row, col] }}">
+                <!-- Hidden input to include the file name in the form submission -->
+                <input type="hidden" name="{{ row }}-{{ col }}" value="{{ data.iloc[row, col] }}">
+              {% elif col==1 %}
+                <center>
+                <input type="radio" id="dir{{ row }}-{{ col }}-luu" name="{{ row }}-{{ col }}" value="luu">
+                <input type="radio" id="dir{{ row }}-{{ col }}-uu" name="{{ row }}-{{ col }}" value="uu">
+                <input type="radio" id="dir{{ row }}-{{ col }}-ruu" name="{{ row }}-{{ col }}" value="ruu">
+                <br>
+                <input type="radio" id="dir{{ row }}-{{ col }}-llu" name="{{ row }}-{{ col }}" value="llu">
+                <input type="radio" id="dir{{ row }}-{{ col }}-lu" name="{{ row }}-{{ col }}" value="lu">
+                <input type="radio" id="dir{{ row }}-{{ col }}-u" name="{{ row }}-{{ col }}" value="u">
+                <input type="radio" id="dir{{ row }}-{{ col }}-ru" name="{{ row }}-{{ col }}" value="ru">
+                <input type="radio" id="dir{{ row }}-{{ col }}-rru" name="{{ row }}-{{ col }}" value="rru">
+                <br>
+                <input type="radio" id="dir{{ row }}-{{ col }}-ll" name="{{ row }}-{{ col }}" value="ll">
+                <input type="radio" id="dir{{ row }}-{{ col }}-l" name="{{ row }}-{{ col }}" value="l">
+                <input type="radio" id="dir{{ row }}-{{ col }}-m" name="{{ row }}-{{ col }}" value="m">
+                <input type="radio" id="dir{{ row }}-{{ col }}-r" name="{{ row }}-{{ col }}" value="r">
+                <input type="radio" id="dir{{ row }}-{{ col }}-rr" name="{{ row }}-{{ col }}" value="rr">
+                <br>
+                <input type="radio" id="dir{{ row }}-{{ col }}-lld" name="{{ row }}-{{ col }}" value="lld">
+                <input type="radio" id="dir{{ row }}-{{ col }}-ld" name="{{ row }}-{{ col }}" value="ld">
+                <input type="radio" id="dir{{ row }}-{{ col }}-d" name="{{ row }}-{{ col }}" value="d">
+                <input type="radio" id="dir{{ row }}-{{ col }}-rd" name="{{ row }}-{{ col }}" value="rd">
+                <input type="radio" id="dir{{ row }}-{{ col }}-rrd" name="{{ row }}-{{ col }}" value="rrd">
+                <br>
+                <input type="radio" id="dir{{ row }}-{{ col }}-ldd" name="{{ row }}-{{ col }}" value="ldd">
+                <input type="radio" id="dir{{ row }}-{{ col }}-dd" name="{{ row }}-{{ col }}" value="dd">
+                <input type="radio" id="dir{{ row }}-{{ col }}-rdd" name="{{ row }}-{{ col }}" value="rdd">
+                </center>
+              {% elif col==2 %}
+                <select name="{{ row }}-{{ col }}" id="expr{{ row }}-{{ col }}">
+                  <option value=" ">...</option>
+                  <option value="happy">&#128522; happy</option>
+                  <option value="lmao">&#128518; laugh</option>
+                  <option value="tehepero">&#128541; tehepero</option>
+                  <option value="wink">&#128521; wink</option>
+                  <option value="seduce">&#128286; seduce</option>
+                  <option value="sex">&#128525; ahegao</option>
+                  <option value="blushed">&#128563; blushed</option>
+                  <option value="shocked">&#128558; shocked</option>
+                  <option value="smirk">&#128527; smirk</option>
+                  <option value="sad">&#128543; sad</option>
+                  <option value="intense">&#128544; intense</option>
+                  <option value="hmph">&#128548; hmph!</option>
+                  <option value="cry">&#128557; cry</option>
+                  <option value="puppy">&#129402; puppy</option>
+                  <option value="eepy">&#129393; eepy</option>
+                </select>
+              {% endif %}
+            </td>
+          {% endfor %}
+          <td><button type="submit">Save All Changes</button></td>
+        </tr>
+      {% endfor %}
+    </table>
+    
+  </form>
+  </center>
+
+<script>
+  {% for row in range(data.shape[0]) %}
+  document.getElementById('dir{{ row }}-1-{{data.iloc[row, 1]}}').checked = true;
+  document.getElementById('expr{{ row }}-2').value = '{{data.iloc[row, 2]}}';
+  {% endfor %}
+</script>
+
+</body>
+</html>
