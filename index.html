@@ -147,7 +147,6 @@
                 toggleIntervalBtn.classList.remove('pause');
                 intervalSelector.style.display = 'inline'; // Show dropdown
             } else {
-            	displayRandomImage();
                 const intervalTime = parseInt(intervalSelector.value, 10);
                 intervalId = setInterval(displayRandomImage, intervalTime);
                 startCountdown(intervalTime);
