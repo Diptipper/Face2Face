@@ -95,17 +95,28 @@
         // Function to display a random image with optional flip
         function displayRandomImage() {
             const randomIndex = Math.floor(Math.random() * images.length);
-            imgDisplay.src = images[randomIndex];
+            const newImageSrc = images[randomIndex];
 
-            // Apply random flip if the checkbox is checked
-            if (flipToggle.checked) {
-                // Randomly flip the image horizontally
-                const randomFlip = Math.random() > 0.5 ? 'scaleX(-1)' : 'scaleX(1)';
-                imgDisplay.style.transform = randomFlip;
-            } else {
-                imgDisplay.style.transform = 'scaleX(1)'; // Reset any flip
-            }
+            // Temporarily hide the image to avoid visible delay
+            imgDisplay.style.visibility = 'hidden';
+
+            // Wait for the new image to load before applying flip and showing it
+            imgDisplay.onload = () => {
+                // Apply random flip if the checkbox is checked
+                if (flipToggle.checked) {
+                    const randomFlip = Math.random() > 0.5 ? 'scaleX(-1)' : 'scaleX(1)';
+                    imgDisplay.style.transform = randomFlip;
+                } else {
+                    imgDisplay.style.transform = 'scaleX(1)'; // Reset any flip
+                }
+                // Show the image after the flip is ready
+                imgDisplay.style.visibility = 'visible';
+            };
+
+            // Update the image source
+            imgDisplay.src = newImageSrc;
         }
+
 
         // Function to start a countdown and update the button text
         function startCountdown(intervalTime) {
