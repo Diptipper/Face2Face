@@ -6,8 +6,11 @@ import os
 # This is for refreshing the metadata file
 def list_files_in_folder(folder_path):
     try:
-        # List all files in the given directory
-        files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+        # Recursively find all files
+        files = []
+        for root, _, filenames in os.walk(folder_path):
+            for filename in filenames:
+                files.append(os.path.relpath(os.path.join(root, filename), folder_path))
         return files
     except FileNotFoundError:
         print(f"The folder '{folder_path}' does not exist.")
@@ -30,9 +33,8 @@ def read_metadata(output_file):
     return existing_data
 
 def write_files_with_tags(folder_path, output_file):
-    
     recorded_metadata = read_metadata(output_file)
-    recorded_files = [ elem[0] for elem in recorded_metadata ]
+    recorded_files = [elem[0] for elem in recorded_metadata]
 
     files = list_files_in_folder(folder_path)
     saved_files = []
@@ -43,32 +45,31 @@ def write_files_with_tags(folder_path, output_file):
             for file in files:
                 if ".txt" in file:
                     continue
-                if file in recorded_files :
+                if file in recorded_files:
                     ifile = recorded_files.index(file)
                     tags = "\t".join(recorded_metadata[ifile][1:])
-                    if newline :
+                    if newline:
                         f.write(f"\n{file}\t{tags}")
                     else:
                         f.write(f"{file}\t{tags}")
                 else:
-                    if newline :
+                    if newline:
                         f.write(f"\n{file}\tm\t ")
                     else:
                         f.write(f"{file}\tm\t ")
-                    print("appending ",file)
-                saved_files += [file]
+                    print("appending ", file)
+                saved_files.append(file)
                 newline = True
-        #print(f"File '{output_file}' has been written with filenames and placeholder tags.")
     except Exception as e:
         print(f"An error occurred while writing the file: {e}")
 
     with open("templates/imglist.js", 'w') as f:
         f.write("const imglist = [\n")
-        for ifile,file in enumerate(saved_files):
-            if ifile>0:
+        for ifile, file in enumerate(saved_files):
+            if ifile > 0:
                 f.write(", ")
             f.write(f"\"{file}\"\n")
-        f.write("                ];\n")
+        f.write("];\n")
 
 
 # -------------------------------------------------------------------------
@@ -90,9 +91,11 @@ def save_spreadsheet(data, filename):
     data.to_csv(filename, sep="\t", index=False)
     print(f"Data saved to {filename}")  # Debugging output
 
-@app.route('/images/<filename>')
+@app.route('/images/<path:filename>')
 def images(filename):
+    # 'filename' can now include subfolders like "folder1/image.png"
     return send_from_directory(os.path.join(app.root_path, 'images'), filename)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():

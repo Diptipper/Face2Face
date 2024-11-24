@@ -45,7 +45,7 @@
           {% for col in range(data.shape[1]) %}
             <td>
               {% if col == 0 %}
-                <!-- Display image for the first column using /images/ route -->
+                <!-- Display image with subfolder path -->
                 <img src="{{ url_for('images', filename=data.iloc[row, col]) }}" alt="{{ data.iloc[row, col] }}">
                 <!-- Hidden input to include the file name in the form submission -->
                 <input type="hidden" name="{{ row }}-{{ col }}" value="{{ data.iloc[row, col] }}">
