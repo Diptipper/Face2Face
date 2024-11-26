@@ -50,6 +50,48 @@
             background-color: #f8f9fa;
             border: 1px solid #ccc;
         }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+        }
+        .dropdown-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #00CC77;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .dropdown-btn:hover {
+            background-color: #00AA66;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            left: -130px;
+            min-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .dropdown-content label {
+            display: block;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .dropdown-content label:last-child {
+            border-bottom: none;
+        }
+        .dropdown-content label:hover {
+            background-color: #f0f8ff;
+        }
     </style>
 </head>
 <body>
@@ -61,113 +103,130 @@
     <div>
         <button id="randomize-btn">New face</button>
         <select id="interval-selector">
-            <option value="5000">5 second</option>
-            <option value="10000" selected>10 seconds</option>
+            <option value="5000">5 seconds</option>
+            <option value="10000">10 seconds</option>
             <option value="30000">30 seconds</option>
             <option value="60000">60 seconds</option>
-            <option value="120000">2 minutes</option>
+            <option value="120000" selected>2 minutes</option>
+            <option value="300000">5 minutes</option>
+            <option value="600000">10 minutes</option>
         </select>
         <button id="toggle-interval-btn">Auto randomizer</button>
         <br>
         <label for="flip-toggle">Flip randomly</label>
         <input type="checkbox" id="flip-toggle">
+        <br>
+        <div class="dropdown">
+            <button class="dropdown-btn" id="series-dropdown-btn">Series Filter</button>
+            <div class="dropdown-content" id="dropdown-content">
+                <label><input type="checkbox" name="series" value="isekai_kaeri" checked> Isekai Kaeri no Yuusha ga Gendai Saikyou!</label>
+                <label><input type="checkbox" name="series" value="gachagirl" checked> Gacha girl next door (R18)</label>
+            </div>
+        </div>
     </div>
     <div id="image-wrapper">
         <img id="image-display" alt="Random Image">
     </div>
 
     <script>
-        // Construct images array from imglist
-        const images = imglist.map(element => "images/" + element);
+        const allImages = imglist;
 
+        let filteredImages = [...allImages];
         const imgDisplay = document.getElementById('image-display');
         const randomizeBtn = document.getElementById('randomize-btn');
         const toggleIntervalBtn = document.getElementById('toggle-interval-btn');
         const intervalSelector = document.getElementById('interval-selector');
         const flipToggle = document.getElementById('flip-toggle');
+        const dropdownContent = document.getElementById('dropdown-content');
+        const seriesDropdownBtn = document.getElementById('series-dropdown-btn');
 
         let intervalId = null;
-        let countdownId = null;
-        let countdownTime = 0;
+        let countdownTimerId = null;
+        let remainingTime = 0;
+        let dropdownVisible = false;
 
-        // Function to display a random image with optional flip
+        function updateFilteredImages() {
+            const selectedSeries = Array.from(
+                document.querySelectorAll('input[name="series"]:checked')
+            ).map(checkbox => checkbox.value);
+
+            filteredImages = selectedSeries.length
+                ? allImages.filter(image =>
+                    selectedSeries.some(series => image.startsWith(series + '/'))
+                  )
+                : [];
+        }
+
         function displayRandomImage() {
-            const randomIndex = Math.floor(Math.random() * images.length);
-            const newImageSrc = images[randomIndex];
+            if (filteredImages.length === 0) {
+                imgDisplay.src = "";
+                imgDisplay.alt = "No images available for the selected filter.";
+                return;
+            }
 
-            // Temporarily hide the image to avoid visible delay
+            const randomIndex = Math.floor(Math.random() * filteredImages.length);
+            const newImageSrc = `images/${filteredImages[randomIndex]}`;
+
             imgDisplay.style.visibility = 'hidden';
-
-            // Wait for the new image to load before applying flip and showing it
             imgDisplay.onload = () => {
-                // Apply random flip if the checkbox is checked
-                if (flipToggle.checked) {
-                    const randomFlip = Math.random() > 0.5 ? 'scaleX(-1)' : 'scaleX(1)';
-                    imgDisplay.style.transform = randomFlip;
-                } else {
-                    imgDisplay.style.transform = 'scaleX(1)'; // Reset any flip
-                }
-                // Show the image after the flip is ready
+                imgDisplay.style.transform = flipToggle.checked && Math.random() > 0.5 ? 'scaleX(-1)' : 'scaleX(1)';
                 imgDisplay.style.visibility = 'visible';
             };
-
-            // Update the image source
             imgDisplay.src = newImageSrc;
         }
 
-
-        // Function to start a countdown and update the button text
-        function startCountdown(intervalTime) {
-            countdownTime = intervalTime / 1000; // Convert to seconds
-            updateCountdownText();
-
-            // Clear any existing countdown
-            if (countdownId) clearInterval(countdownId);
-
-            // Start new countdown
-            countdownId = setInterval(() => {
-                countdownTime -= 1;
-                if (countdownTime <= 0) countdownTime = intervalTime / 1000;
-                updateCountdownText();
-            }, 1000);
-        }
-
-        // Function to update the button text with the countdown
-        function updateCountdownText() {
-            toggleIntervalBtn.textContent = `Pause Auto randomize (${countdownTime}s)`;
-        }
-
-        // Event listener for manual randomization
-        randomizeBtn.addEventListener('click', () => {
-            displayRandomImage();
-            if (intervalId) {
-            	toggleIntervalBtn.click();
-           		toggleIntervalBtn.click();
+        function updateButtonCountdown() {
+            if (remainingTime > 0) {
+                toggleIntervalBtn.textContent = `Pause Auto randomize (${Math.ceil(remainingTime / 1000)}s)`;
+                remainingTime -= 1000;
+            } else {
+                remainingTime = parseInt(intervalSelector.value, 10);
             }
+        }
+
+        dropdownContent.addEventListener('change', () => {
+            updateFilteredImages();
+            displayRandomImage();
         });
 
-        // Event listener for toggling auto-randomization
+        randomizeBtn.addEventListener('click', displayRandomImage);
+
         toggleIntervalBtn.addEventListener('click', () => {
             if (intervalId) {
                 clearInterval(intervalId);
-                clearInterval(countdownId);
+                clearInterval(countdownTimerId);
                 intervalId = null;
-                countdownId = null;
+                countdownTimerId = null;
                 toggleIntervalBtn.textContent = 'Auto randomizer';
                 toggleIntervalBtn.classList.remove('pause');
-                intervalSelector.style.display = 'inline'; // Show dropdown
             } else {
-            	displayRandomImage();
+                displayRandomImage();
                 const intervalTime = parseInt(intervalSelector.value, 10);
-                intervalId = setInterval(displayRandomImage, intervalTime);
-                startCountdown(intervalTime);
-                toggleIntervalBtn.textContent = `Pause Auto randomize (${countdownTime}s)`;
+                remainingTime = intervalTime;
+
+                intervalId = setInterval(() => {
+                    displayRandomImage();
+                    remainingTime = intervalTime;
+                }, intervalTime);
+
+                countdownTimerId = setInterval(updateButtonCountdown, 1000);
+                toggleIntervalBtn.textContent = `Pause Auto randomize (${Math.ceil(intervalTime / 1000)}s)`;
                 toggleIntervalBtn.classList.add('pause');
-                intervalSelector.style.display = 'none'; // Hide dropdown
             }
         });
 
-        // Display a random image on initial load
+        seriesDropdownBtn.addEventListener('click', () => {
+            dropdownVisible = !dropdownVisible;
+            dropdownContent.style.display = dropdownVisible ? 'block' : 'none';
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!seriesDropdownBtn.contains(event.target) && !dropdownContent.contains(event.target)) {
+                dropdownVisible = false;
+                dropdownContent.style.display = 'none';
+            }
+        });
+
         displayRandomImage();
     </script>
 </body>
